@@ -132,7 +132,7 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--sand);outline-offse
 .note p b{color:var(--sand)}
 footer{background:var(--night);color:#a8957f;font-size:12px;padding-block:28px}
 footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:center}
-footer img{height:30px;width:auto;opacity:.8}
+footer img{height:56px;width:auto;opacity:.9}
 
 
 .f{display:grid;gap:4px}
@@ -275,17 +275,17 @@ footer img{height:30px;width:auto;opacity:.8}
   </div></div>
 
   <aside class="panel" id="cadastro" aria-label="Cadastro">
-    <div><div class="mono" style="color:var(--sand)">Torre única · 50 apartamentos</div><h2>2 suítes <b>de frente para o mar</b></h2></div>
+    <div><div class="mono" style="color:var(--sand)">Morar Bem Imobiliária · Torre única</div><h2>2 suítes <b>de frente para o mar</b></h2></div>
     <div class="chips"><span class="chip">77 a 79 m²</span><span class="chip">Até 2 vagas</span><span class="chip s">Rooftop com borda infinita</span></div>
     <form id="Lead_Dune" class="form" novalidate>
       <input type="text" id="site" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
       <div class="f"><label for="nome">Nome</label><input id="nome" name="nome" type="text" autocomplete="name" placeholder="Nome e sobrenome"><div class="err" id="e-nome"></div></div>
       <div class="f"><label for="tel">WhatsApp</label><input id="tel" name="telefone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(79) 99999-9999"><div class="err" id="e-tel"></div></div>
       <div class="f"><label for="email">E-mail</label><input id="email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="seu@email.com"><div class="err" id="e-email"></div></div>
-      <label class="consent"><input type="checkbox" id="lgpd">Autorizo a União a falar comigo sobre o Dune Simple Life (LGPD).</label>
+      <label class="consent"><input type="checkbox" id="lgpd">Autorizo a Morar Bem Imobiliária a falar comigo sobre o Dune Simple Life (LGPD).</label>
       <div class="err" id="e-lgpd"></div>
       <button class="go" id="send" type="submit"><span id="send-t">Quero conhecer o Dune</span><i><svg viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4"/></svg></i></button>
-      <div class="ok" id="ok" hidden><b>Cadastro recebido</b><span>Um consultor da União vai falar com você no WhatsApp em instantes.</span></div>
+      <div class="ok" id="ok" hidden><b>Cadastro recebido</b><span>Um corretor da Morar Bem Imobiliária vai falar com você no WhatsApp em instantes.</span></div>
     </form>
     <div class="fine">Imagens meramente ilustrativas.</div>
   </aside>
@@ -385,7 +385,7 @@ footer img{height:30px;width:auto;opacity:.8}
   </div></div>
 </section>
 <div class="scrim" id="scrim"></div>
-<footer><div class="wrap"><img src="v/uniao.png" alt="União"><span>Dune Simple Life · Rua Maria Genelícia Bomfim Costa, 460 · Aruana, Aracaju/SE · (79) 3211-5060</span><span>Imagens meramente ilustrativas.</span></div></footer>
+<footer><div class="wrap"><img src="v/morarbem.png" alt="Morar Bem Imobiliária"><span>Dune Simple Life · Rua Maria Genelícia Bomfim Costa, 460 · Aruana, Aracaju/SE · Comercialização: Morar Bem Imobiliária · CRECI 195 PJ</span><span>Imagens meramente ilustrativas.</span></div></footer>
 
 <script>
 (function(){
@@ -508,7 +508,7 @@ var CONFIG={ pixelId:"", webhookUrl:"" };  /* Pixel do Meta e endereço do CRM q
     if(!$('lgpd').checked)err('lgpd','Marque a autorização para podermos te chamar.');
     if(bad)return;
     if(f.site)return;
-    f.origem='site-dune';f.data=new Date().toISOString();Object.assign(f,params);delete f.site;
+    f.origem='site-dune';f.imobiliaria='Morar Bem Imobiliária';f.data=new Date().toISOString();Object.assign(f,params);delete f.site;
     var btn=$('send');btn.disabled=true;$('send-t').textContent='Enviando…';
     function done(){[].forEach.call($('Lead_Dune').querySelectorAll('.f,.consent,#send'),function(el){el.hidden=true;});$('ok').hidden=false;}
     if(window.fbq)fbq('track','Lead',{content_name:'Dune Simple Life'});
