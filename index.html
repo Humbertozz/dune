@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta charset="utf-8">
+<title>Dune Simple Life</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;600;700;800&family=Playfair+Display:ital,wght@1,500;1,600;1,700&family=Manrope:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Site de lançamento: tour em VFX do céu ao apartamento; troca de cena por uma "duna" que varre a tela; luz que segue o cursor. Visual único em areia, terracota e mar. */
+:root{
+  --night:#170E08; --brown:#3B2416; --terra:#C46A35; --sand:#EAD9B8; --cream:#F7EFE1; --sea:#57B7B3;
+  --glass:rgba(23,14,8,.46); --stroke:rgba(255,240,220,.2);
+  --head:"Inter Tight","Helvetica Neue",Arial,ui-sans-serif,system-ui,sans-serif;
+  --serif:"Playfair Display","Didot","Bodoni 72",Georgia,serif;
+  --font:"Manrope","Avenir Next","Segoe UI",ui-sans-serif,system-ui,sans-serif;
+  --mono:"DM Mono",ui-monospace,Menlo,monospace;
+  --ease:cubic-bezier(.7,0,.2,1);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--night);color:#fff;font:400 16px/1.55 var(--font);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1360px;margin:0 auto;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px))}
+.mono{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+button{font-family:inherit;color:inherit}
+button:focus-visible,a:focus-visible{outline:2px solid var(--sand);outline-offset:3px}
+
+.stage{position:relative;height:100vh;height:100svh;min-height:640px;overflow:hidden;background:var(--night);touch-action:pan-y;--mx:70%;--my:30%}
+.clip{position:absolute;inset:0;opacity:0;z-index:1}
+.clip.on{opacity:1;z-index:2}
+.clip.in{opacity:1;z-index:3}
+.clip video{width:100%;height:100%;object-fit:cover;display:block;transition:transform 1.3s var(--ease),filter 1.3s}
+.clip.out video{transform:scale(1.1) translateX(-2%);filter:sepia(.35) brightness(1.15) blur(1.5px)}
+.edge{position:absolute;inset:0;z-index:4;pointer-events:none;opacity:0}
+.edge path{fill:none;stroke:var(--sand);stroke-width:2.5;filter:drop-shadow(0 0 14px rgba(255,210,150,.95))}
+.edge path.glow{stroke:rgba(196,106,53,.55);stroke-width:26;filter:blur(14px)}
+.light{position:absolute;inset:0;z-index:5;pointer-events:none;background:radial-gradient(420px 420px at var(--mx) var(--my),rgba(255,214,160,.16),transparent 70%);mix-blend-mode:screen;transition:background .2s}
+.shade{position:absolute;inset:0;z-index:5;pointer-events:none;background:
+  linear-gradient(180deg,rgba(23,14,8,.62) 0%,rgba(23,14,8,0) 22%),
+  linear-gradient(0deg,rgba(23,14,8,.92) 0%,rgba(23,14,8,.45) 34%,rgba(23,14,8,0) 60%),
+  linear-gradient(90deg,rgba(23,14,8,.6) 0%,rgba(23,14,8,0) 50%)}
+.grain{position:absolute;inset:0;z-index:5;pointer-events:none;opacity:.08;mix-blend-mode:overlay}
+
+.top{position:absolute;z-index:7;left:0;right:0;top:0;padding-top:max(28px,calc(env(safe-area-inset-top,0px) + 16px))}
+.top .wrap{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px}
+.logo{justify-self:start;line-height:0}
+.logo img{height:52px;width:auto}
+.hud{display:flex;align-items:center;gap:14px;padding:6px;border-radius:999px;background:var(--glass);border:1px solid var(--stroke);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.hud button{all:unset;cursor:pointer;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;transition:background .25s}
+.hud button:hover{background:rgba(255,255,255,.12)}
+.hud button:focus-visible{outline:2px solid var(--sand)}
+.hud svg{width:14px;height:14px;fill:none;stroke:#fff;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.hudmid{display:grid;gap:5px;min-width:200px;text-align:center}
+.hudmid .mono{font-size:10.5px;white-space:nowrap}
+.hudmid .mono b{color:var(--sand);font-weight:500}
+.track{height:2px;background:rgba(255,255,255,.18);border-radius:1px;overflow:hidden}
+.track b{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--terra),var(--sand))}
+.tag{justify-self:end;text-decoration:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 14px;border-radius:999px;border:1px dashed rgba(234,217,184,.7);color:var(--sand);font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;background:rgba(23,14,8,.35)}
+.tag i{width:7px;height:7px;border-radius:50%;background:var(--terra)}
+@media (prefers-reduced-motion:no-preference){.tag i{animation:blink 1.6s infinite}}
+@keyframes blink{50%{opacity:.25}}
+
+.ghost{position:absolute;z-index:6;right:-2vw;bottom:-6vw;font-family:var(--head);font-weight:700;font-size:34vw;line-height:.8;letter-spacing:-.06em;color:transparent;-webkit-text-stroke:1px rgba(234,217,184,.16);pointer-events:none;user-select:none;transition:transform 1.4s var(--ease)}
+
+.copy{position:absolute;z-index:7;left:0;right:0;bottom:max(70px,calc(env(safe-area-inset-bottom,0px) + 52px));pointer-events:none}
+.txt{max-width:720px;min-width:0}
+.eyebrow{display:flex;align-items:center;gap:12px;color:rgba(255,255,255,.82)}
+.eyebrow::before{content:"";width:34px;height:10px;background:no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 10'%3E%3Cpath d='M0 7 Q8.5 0 17 5 T34 3' fill='none' stroke='%23EAD9B8' stroke-width='1.6'/%3E%3C/svg%3E")}
+.txt h1{font-family:var(--head);font-size:clamp(46px,6vw,96px);line-height:.95;letter-spacing:-.04em;font-weight:400;margin:16px 0 0}
+.ln{display:block;overflow:hidden;padding-bottom:.08em}
+.ln>span{display:inline-block;transform:translateY(110%);filter:blur(8px);transition:transform 1.05s var(--ease),filter 1.05s var(--ease)}
+.ln.b>span{font-weight:800}
+.ln.y>span{font-family:var(--serif);font-style:italic;font-weight:600;letter-spacing:-.02em;padding-right:.06em;background:linear-gradient(90deg,var(--sand),#F3B27A 60%,var(--terra));-webkit-background-clip:text;background-clip:text;color:transparent}
+.txt p{font-size:clamp(15px,1.2vw,18px);color:rgba(255,255,255,.84);max-width:44ch;margin:16px 0 0;opacity:0;transform:translateY(10px);transition:opacity .8s .35s,transform .8s .35s var(--ease)}
+.txt.in .ln>span{transform:none;filter:none}
+.txt.in .ln:nth-child(2)>span{transition-delay:.09s}
+.txt.in .ln:nth-child(3)>span{transition-delay:.18s}
+.txt.in p{opacity:1;transform:none}
+
+.rail{position:absolute;z-index:7;left:max(40px,env(safe-area-inset-left,0px));top:50%;transform:translateY(-50%);display:grid;gap:10px}
+.rail button{all:unset;cursor:pointer;display:flex;align-items:center;gap:12px;font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.45);transition:color .3s}
+.rail button i{width:14px;height:1px;background:currentColor;transition:width .45s var(--ease)}
+.rail button span{opacity:0;transform:translateX(-6px);transition:opacity .35s,transform .35s}
+.rail button:hover span,.rail button.on span{opacity:1;transform:none}
+.rail button.on{color:#fff}
+.rail button.on i{width:40px;background:var(--sand)}
+.rail button:focus-visible{outline:2px solid var(--sand);outline-offset:4px}
+
+.intro{position:absolute;inset:0;z-index:9;display:grid;place-items:center;align-content:center;gap:22px;background:radial-gradient(80% 80% at 50% 40%,#5A3A22 0%,#3B2416 55%,#1E120A 100%);pointer-events:none;transition:clip-path 1.6s var(--ease);clip-path:inset(0 0 0 0)}
+.intro img{width:min(340px,62vw);height:auto;opacity:0;transform:translateY(14px);animation:rise 1s .15s var(--ease) forwards}
+.intro .mono{color:var(--sand);opacity:0;animation:rise 1s .4s var(--ease) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+.intro.gone{clip-path:inset(0 0 100% 0)}
+
+.panel{position:absolute;z-index:8;right:max(40px,env(safe-area-inset-right,0px));top:50%;transform:translateY(-44%);width:360px;border-radius:26px;padding:24px;background:rgba(23,14,8,.55);border:1px solid var(--stroke);backdrop-filter:blur(24px) saturate(1.25);-webkit-backdrop-filter:blur(24px) saturate(1.25);display:grid;gap:14px}
+.panel h2{font-family:var(--head);font-size:30px;line-height:1.02;letter-spacing:-.035em;font-weight:400;margin:8px 0 0}
+.panel h2 b{font-family:var(--serif);font-style:italic;font-weight:600;letter-spacing:-.01em;color:var(--sand)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:6px 10px;border-radius:999px;border:1px solid var(--stroke)}
+.chip.s{border-color:rgba(87,183,179,.6);color:#A8E3E0}
+.lockform{position:relative;display:grid;gap:10px}
+.fake{height:44px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);display:flex;align-items:center;padding:0 14px;color:rgba(255,255,255,.35);font-size:15px}
+.fakebtn{height:52px;border-radius:999px;background:linear-gradient(90deg,var(--terra),#E39A5F);display:grid;place-items:center;color:#fff;font-weight:600;letter-spacing:.02em;opacity:.55}
+.lockform .veil{position:absolute;inset:-6px;border-radius:18px;background:rgba(23,14,8,.64);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:grid;place-items:center;align-content:center;text-align:center;padding:16px;gap:8px}
+.lockform .veil svg{width:26px;height:26px;stroke:var(--sand);fill:none;stroke-width:1.6}
+.lockform .veil b{font-size:15px;font-weight:600}
+.lockform .veil span{font-size:13px;color:rgba(255,255,255,.72);max-width:28ch}
+.fine{font-size:11px;color:rgba(255,255,255,.5);line-height:1.4}
+.mcta{display:none}
+
+.after{background:var(--cream);color:var(--brown);padding-block:96px 72px}
+.after .mono{color:var(--terra)}
+.after h2{font-family:var(--head);font-size:clamp(40px,5vw,78px);line-height:1;letter-spacing:-.045em;font-weight:400;margin:12px 0 0;max-width:16ch}
+.after h2 b{font-family:var(--serif);font-style:italic;font-weight:600;letter-spacing:-.02em;color:var(--terra)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:48px;border-top:1px solid rgba(59,36,22,.18)}
+.stat{padding:26px 22px 0 0}
+.stat+.stat{padding-left:22px;border-left:1px solid rgba(59,36,22,.12)}
+.stat strong{display:block;font-family:var(--head);font-weight:700;font-size:clamp(44px,5vw,76px);letter-spacing:-.05em;line-height:1;color:var(--brown)}
+.stat span{display:block;margin-top:8px;font-size:14px;color:#7A5A44}
+.lockgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:56px}
+.lk{position:relative;border-radius:24px;overflow:hidden;min-height:280px;background:#000;color:#fff}
+.lk img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:blur(8px) brightness(.55) saturate(1.2);transform:scale(1.1)}
+.lk .in{position:relative;height:100%;min-height:280px;display:grid;align-content:end;gap:6px;padding:22px}
+.lk .in .mono{color:var(--sand)}
+.lk .in b{font-family:var(--head);font-weight:700;font-size:28px;letter-spacing:-.03em;line-height:1}
+.lk .in span{font-size:14px;color:rgba(255,255,255,.78)}
+.lk .pad{position:absolute;top:18px;right:18px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.14);display:grid;place-items:center}
+.lk .pad svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:1.8}
+.note{margin-top:28px;display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;align-items:center;padding:24px 28px;border-radius:24px;background:var(--brown);color:#fff}
+.note p{margin:0;font-size:18px;max-width:62ch}
+.note p b{color:var(--sand)}
+footer{background:var(--night);color:#a8957f;font-size:12px;padding-block:28px}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:center}
+footer img{height:30px;width:auto;opacity:.8}
+
+
+.f{display:grid;gap:4px}
+.f label{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.6)}
+.f input{height:46px;border-radius:14px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#fff;padding:0 14px;font:500 16px var(--font);width:100%}
+.f input::placeholder{color:rgba(255,255,255,.4)}
+.f input:focus{outline:none;border-color:var(--sand);background:rgba(255,255,255,.1)}
+.form{display:grid;gap:12px}
+.err{color:#F09A78;font-size:12px}
+.consent{display:flex;gap:10px;align-items:flex-start;font-size:12px;line-height:1.45;color:rgba(255,255,255,.65)}
+.consent input{width:16px;height:16px;accent-color:var(--terra);margin-top:2px;flex:none}
+.go{display:inline-flex;justify-content:space-between;align-items:center;gap:18px;height:54px;padding:0 8px 0 24px;border-radius:999px;border:0;background:linear-gradient(90deg,var(--terra),#E39A5F);color:#fff;font:600 15px var(--font);letter-spacing:.01em;cursor:pointer;text-decoration:none}
+.form .go{width:100%}
+.go i{width:38px;height:38px;border-radius:50%;background:rgba(23,14,8,.85);display:grid;place-items:center;transition:transform .3s var(--ease)}
+.go i svg{width:14px;height:14px;stroke:var(--sand);fill:none;stroke-width:1.8}
+.go:hover i{transform:translateX(3px)}
+.go:disabled{opacity:.6;cursor:default}
+.go.small{height:50px;font-size:14px}
+.ok{border-radius:14px;padding:16px;background:rgba(234,217,184,.12);border:1px solid rgba(234,217,184,.4);display:grid;gap:4px;font-size:14px}
+.ok b{font-family:var(--serif);font-style:italic;font-size:20px;color:var(--sand)}
+.close{display:none}
+.sec{padding-block:96px}
+.sec h2{font-family:var(--head);font-size:clamp(36px,4.6vw,70px);line-height:1;letter-spacing:-.045em;font-weight:400;margin:12px 0 0}
+.sec h2 b{font-family:var(--serif);font-style:italic;font-weight:600;letter-spacing:-.02em}
+.sec .head{display:flex;justify-content:space-between;align-items:flex-end;gap:32px;flex-wrap:wrap;margin-bottom:40px}
+.sec .head p{max-width:38ch;margin:0}
+.plants{background:var(--cream);color:var(--brown);padding-top:0}
+.plants .mono,.diff .mono,.loc .mono{color:var(--terra)}
+.plants h2 b,.diff h2 b,.loc h2 b{color:var(--terra)}
+.plants .head p,.loc p{color:#7A5A44}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.tabs button{all:unset;cursor:pointer;padding:10px 18px;border-radius:999px;border:1px solid rgba(59,36,22,.2);font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--brown);transition:background .25s,color .25s}
+.tabs button[aria-selected="true"]{background:var(--brown);color:var(--sand);border-color:var(--brown)}
+.tabs button:focus-visible{outline:2px solid var(--terra);outline-offset:3px}
+.plant{display:grid;grid-template-columns:1.5fr 1fr;gap:28px;align-items:center;background:#fff;border-radius:28px;padding:28px}
+.pimg{min-width:0}
+.pimg img{width:100%;height:auto;display:block;transition:opacity .35s}
+.pinfo{display:grid;gap:14px;align-content:start}
+.pinfo strong{font-family:var(--head);font-weight:700;font-size:clamp(48px,5vw,78px);letter-spacing:-.05em;line-height:1}
+.pinfo ul{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.pinfo li{display:flex;gap:10px;align-items:flex-start;color:#5E4332}
+.pinfo li::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--terra);margin-top:9px;flex:none}
+.roof{background:var(--brown)}
+.roof .head p{color:rgba(255,255,255,.75)}
+.roof h2 b{color:var(--sand)}
+.roofgrid{display:grid;grid-template-columns:1.4fr 1fr;gap:28px;align-items:center}
+.rimg{border-radius:28px;overflow:hidden;background:#fff;min-width:0}
+.rimg img{width:100%;height:auto;display:block}
+.legend{margin:0;padding:0;list-style:none;counter-reset:n;display:grid;grid-template-columns:1fr 1fr;gap:10px 18px}
+.legend li{counter-increment:n;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);font-size:15px}
+.legend li::before{content:counter(n,decimal-leading-zero);font-family:var(--mono);font-size:11px;width:30px;height:30px;border-radius:50%;background:var(--sand);color:var(--brown);display:grid;place-items:center;flex:none}
+.diff{background:var(--cream);color:var(--brown)}
+.diffgrid{display:grid;grid-template-columns:.8fr 1.2fr;gap:48px;align-items:center}
+.timg{border-radius:28px;overflow:hidden;min-width:0}
+.timg img{width:100%;height:auto;display:block}
+.dlist{margin:28px 0 0;padding:0;list-style:none;display:grid;gap:0;border-top:1px solid rgba(59,36,22,.15)}
+.dlist li{padding:16px 0;border-bottom:1px solid rgba(59,36,22,.12);font-size:17px;display:flex;gap:14px;align-items:center}
+.dlist li::before{content:"";width:26px;height:8px;flex:none;background:no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 10'%3E%3Cpath d='M0 7 Q8.5 0 17 5 T34 3' fill='none' stroke='%23C46A35' stroke-width='2'/%3E%3C/svg%3E")}
+.loc{background:#F1E6D2;color:var(--brown)}
+.locgrid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start}
+.addr{font-size:20px;margin:22px 0 24px}
+.ficha{margin:0;display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid rgba(59,36,22,.15)}
+.ficha div{padding:16px 0;border-bottom:1px solid rgba(59,36,22,.12)}
+.ficha dt{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--terra)}
+.ficha dd{margin:4px 0 0;font-size:16px;font-weight:500}
+.final{background:var(--night);padding-block:72px}
+.cta{display:flex;justify-content:space-between;align-items:center;gap:28px;flex-wrap:wrap;padding:40px;border-radius:30px;background:radial-gradient(120% 140% at 0% 0%,#5A3A22,#2A190E)}
+.cta h2{margin-top:10px}
+.cta h2 b{color:var(--sand)}
+.scrim{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .4s}
+@media (max-width:1100px){
+  .panel{display:grid!important;position:fixed;left:0;right:0;top:auto;bottom:0;width:auto;transform:translateY(105%);border-radius:24px 24px 0 0;padding:22px max(20px,env(safe-area-inset-left,0px)) max(22px,calc(env(safe-area-inset-bottom,0px) + 16px));background:rgba(23,14,8,.95);transition:transform .5s var(--ease);z-index:21;max-height:92svh;overflow:auto}
+  .panel.open{transform:none}
+  .scrim.open{opacity:1;pointer-events:auto}
+  .close{display:grid;position:fixed;z-index:22;right:20px;bottom:calc(min(92svh,640px) - 54px);width:36px;height:36px;border-radius:50%;border:1px solid var(--stroke);background:rgba(23,14,8,.8);place-items:center;opacity:0;pointer-events:none}
+  .close.show{opacity:1;pointer-events:auto}
+  .close svg{width:12px;height:12px;stroke:#fff;stroke-width:1.8}
+  .mcta{justify-content:space-between!important;padding:0 8px 0 22px;border:0!important;background:linear-gradient(90deg,var(--terra),#E39A5F)!important;color:#fff!important;font:600 15px var(--font)!important;letter-spacing:0!important;text-transform:none!important;position:fixed!important;z-index:19;cursor:pointer;transition:transform .4s var(--ease)}
+  .mcta i{width:40px;height:40px;border-radius:50%;background:rgba(23,14,8,.85);display:grid;place-items:center}
+  .mcta i svg{width:14px;height:14px;stroke:var(--sand);fill:none;stroke-width:1.8}
+  .mcta.hide{transform:translateY(160%)}
+  .plant,.roofgrid,.diffgrid,.locgrid{grid-template-columns:1fr}
+  .plant{padding:18px}
+  .diffgrid .timg{max-width:420px}
+}
+@media (max-width:700px){.legend{grid-template-columns:1fr}.ficha{grid-template-columns:1fr}.sec{padding-block:72px}.plants{padding-top:0}.cta{padding:28px}.final{padding-bottom:120px}}
+@media (max-width:1200px){.rail{display:none}}
+@media (max-width:1100px){
+  .panel{display:none}
+  .mcta{display:flex;position:absolute;z-index:8;left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));justify-content:center;align-items:center;height:54px;border-radius:999px;border:1px dashed rgba(234,217,184,.7);background:rgba(23,14,8,.55);color:var(--sand);font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  .copy{bottom:max(96px,calc(env(safe-area-inset-bottom,0px) + 86px))}
+  .lockgrid{grid-template-columns:1fr}
+  .stats{grid-template-columns:1fr 1fr}
+  .stat{padding:22px 14px 22px 0!important;border-left:0!important;border-bottom:1px solid rgba(59,36,22,.12)}
+}
+@media (max-width:700px){
+  .wrap{padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+  .top .wrap{grid-template-columns:1fr auto}
+  .tag{display:none}
+  .logo img{height:40px}
+  .hudmid{min-width:120px}
+  .hudmid .mono{font-size:9.5px;letter-spacing:.08em}
+  .txt h1{font-size:clamp(42px,12vw,58px)}
+  .ghost{font-size:58vw;bottom:auto;top:18%}
+  .shade{background:linear-gradient(180deg,rgba(23,14,8,.7) 0%,rgba(23,14,8,0) 20%),linear-gradient(0deg,rgba(23,14,8,.95) 0%,rgba(23,14,8,.55) 36%,rgba(23,14,8,0) 62%)}
+}
+@media (prefers-reduced-motion:reduce){.intro img,.intro .mono{animation:none;opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+
+<section class="stage" id="tour" aria-label="Tour pelo Dune Simple Life">
+  <div id="clips"></div>
+  <svg class="edge" id="edge" preserveAspectRatio="none"><path class="glow" id="eg"/><path id="ep"/></svg>
+  <div class="shade"></div>
+  <div class="light"></div>
+  <div class="grain" id="grain"></div>
+  <div class="ghost" id="ghost" aria-hidden="true">01</div>
+  <div class="intro" id="intro" aria-hidden="true"><img src="v/logo.png" alt=""><span class="mono">De frente para o mar · Aruana</span></div>
+
+  <div class="top"><div class="wrap">
+    <div class="logo"><img src="v/logo.png" alt="Dune Simple Life"></div>
+    <div class="hud">
+      <button id="prev" type="button" aria-label="Cena anterior"><svg viewBox="0 0 16 16"><path d="M10 3L5 8l5 5"/></svg></button>
+      <div class="hudmid"><div class="mono" id="hudtxt"><b>01</b> / 09 · Chegada</div><div class="track"><b id="bar"></b></div></div>
+      <button id="next" type="button" aria-label="Próxima cena"><svg viewBox="0 0 16 16"><path d="M6 3l5 5-5 5"/></svg></button>
+    </div>
+    <a class="tag" href="#cadastro" data-open><i></i>Quero conhecer</a>
+  </div></div>
+
+  <nav class="rail" id="rail" aria-label="Cenas"></nav>
+
+  <div class="copy"><div class="wrap">
+    <div class="txt in" id="txt">
+      <div class="eyebrow mono" id="eye">Aruana · Aracaju/SE</div>
+      <h1 id="hl"><span class="ln"><span>De frente</span></span><span class="ln y"><span>para o mar.</span></span></h1>
+      <p id="pp">Muito mais que um empreendimento: um convite para explorar novas fronteiras.</p>
+    </div>
+  </div></div>
+
+  <aside class="panel" id="cadastro" aria-label="Cadastro">
+    <div><div class="mono" style="color:var(--sand)">Torre única · 50 apartamentos</div><h2>2 suítes <b>de frente para o mar</b></h2></div>
+    <div class="chips"><span class="chip">77 a 79 m²</span><span class="chip">Até 2 vagas</span><span class="chip s">Rooftop com borda infinita</span></div>
+    <form id="Lead_Dune" class="form" novalidate>
+      <input type="text" id="site" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+      <div class="f"><label for="nome">Nome</label><input id="nome" name="nome" type="text" autocomplete="name" placeholder="Nome e sobrenome"><div class="err" id="e-nome"></div></div>
+      <div class="f"><label for="tel">WhatsApp</label><input id="tel" name="telefone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(79) 99999-9999"><div class="err" id="e-tel"></div></div>
+      <div class="f"><label for="email">E-mail</label><input id="email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="seu@email.com"><div class="err" id="e-email"></div></div>
+      <label class="consent"><input type="checkbox" id="lgpd">Autorizo a União a falar comigo sobre o Dune Simple Life (LGPD).</label>
+      <div class="err" id="e-lgpd"></div>
+      <button class="go" id="send" type="submit"><span id="send-t">Quero conhecer o Dune</span><i><svg viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4"/></svg></i></button>
+      <div class="ok" id="ok" hidden><b>Cadastro recebido</b><span>Um consultor da União vai falar com você no WhatsApp em instantes.</span></div>
+    </form>
+    <div class="fine">Imagens meramente ilustrativas.</div>
+  </aside>
+  <button class="mcta" id="mcta" type="button" data-open>Quero conhecer o Dune<i><svg viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4"/></svg></i></button>
+  <button class="close" id="close" type="button" aria-label="Fechar cadastro"><svg viewBox="0 0 12 12"><path d="M1 1l10 10M11 1L1 11"/></svg></button>
+</section>
+
+<section class="after">
+  <div class="wrap">
+    <div class="mono">Dune Simple Life</div>
+    <h2>Exclusivo por <b>natureza</b></h2>
+    <div class="stats">
+      <div class="stat"><strong>50</strong><span>apartamentos em torre única</span></div>
+      <div class="stat"><strong>16</strong><span>pavimentos</span></div>
+      <div class="stat"><strong>2</strong><span>suítes em todas as plantas</span></div>
+      <div class="stat"><strong>79m²</strong><span>maior planta, com jardim</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec plants" id="plantas">
+  <div class="wrap">
+    <div class="head"><div><div class="mono">Plantas</div><h2>4 plantas, <b>2 suítes</b> em todas</h2></div><p>Living integrado, varanda e lavabo. As tipos III e IV têm jardim privativo.</p></div>
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div class="plant">
+      <div class="pimg"><img id="pimg" src="v/pl1.jpg" alt="Planta Tipo I humanizada"></div>
+      <div class="pinfo">
+        <div class="mono" id="pname">Planta Tipo I</div>
+        <strong id="parea">77,71 m²</strong>
+        <ul id="plist"></ul>
+        <a class="go small" href="#cadastro" data-open><span>Receber a tabela desta planta</span><i><svg viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4"/></svg></i></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec roof" id="rooftop">
+  <div class="wrap">
+    <div class="head"><div><div class="mono" style="color:var(--sand)">The Ocean Rooftop</div><h2>O lazer mora <b>no topo</b></h2></div><p>Doze ambientes no último pavimento, de frente para o mar.</p></div>
+    <div class="roofgrid">
+      <div class="rimg"><img src="v/rooftop.jpg" alt="Implantação do rooftop com os ambientes numerados"></div>
+      <ol class="legend">
+        <li>Piscina</li><li>Hidromassagem</li><li>Borda infinita</li><li>Deck</li><li>Deck molhado</li><li>Solarium</li>
+        <li>Sauna</li><li>Sky gym</li><li>Sunset place</li><li>Gourmet VIP</li><li>Garden grill</li><li>Elevadores</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section class="sec diff">
+  <div class="wrap">
+    <div class="diffgrid">
+      <div class="timg"><img src="v/torre.jpg" alt="Fachada da torre Dune Simple Life"></div>
+      <div>
+        <div class="mono">Diferenciais</div><h2>Pensado para <b>viver simples</b></h2>
+        <ul class="dlist">
+          <li>Torre única com apenas 50 apartamentos</li>
+          <li>Rooftop com área de lazer completa</li>
+          <li>Piscina com borda infinita e vista para o mar</li>
+          <li>Controle de acesso com leitor facial</li>
+          <li>Hidromassagem e sauna a vapor</li>
+          <li>Design biofílico na fachada</li>
+          <li>Mini market e delivery</li>
+          <li>Fechadura eletrônica em todos os apartamentos</li>
+          <li>Acabamentos especificados pelo Studio W+</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec loc">
+  <div class="wrap locgrid">
+    <div>
+      <div class="mono">Localização</div>
+      <h2>Aruana, <b>de frente para o mar</b></h2>
+      <p class="addr">Rua Maria Genelícia Bomfim Costa, 460<br>Aruana · Aracaju/SE</p>
+      <a class="go small" href="https://www.google.com/maps/search/?api=1&query=Rua+Maria+Genel%C3%ADcia+Bomfim+Costa+460+Aruana+Aracaju+SE" target="_blank" rel="noopener"><span>Abrir no Google Maps</span><i><svg viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4"/></svg></i></a>
+    </div>
+    <dl class="ficha">
+      <div><dt>Terreno</dt><dd>935,10 m²</dd></div>
+      <div><dt>Pavimentos</dt><dd>16</dd></div>
+      <div><dt>Apartamentos</dt><dd>50 · 4 por andar</dd></div>
+      <div><dt>Elevadores</dt><dd>2</dd></div>
+      <div><dt>Vagas</dt><dd>Até 2 por apartamento</dd></div>
+      <div><dt>Arquitetura</dt><dd>Immobille Arquitetura</dd></div>
+      <div><dt>Ambientação</dt><dd>Estúdio W+</dd></div>
+      <div><dt>Medição de água</dt><dd>Individualizada</dd></div>
+    </dl>
+  </div>
+</section>
+
+<section class="sec final">
+  <div class="wrap"><div class="cta">
+    <div><div class="mono" style="color:var(--sand)">Apenas 50 unidades</div><h2>Seu lugar <b>de frente para o mar</b></h2></div>
+    <a class="go" href="#cadastro" data-open><span>Quero conhecer o Dune</span><i><svg viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4"/></svg></i></a>
+  </div></div>
+</section>
+<div class="scrim" id="scrim"></div>
+<footer><div class="wrap"><img src="v/uniao.png" alt="União"><span>Dune Simple Life · Rua Maria Genelícia Bomfim Costa, 460 · Aruana, Aracaju/SE · (79) 3211-5060</span><span>Imagens meramente ilustrativas.</span></div></footer>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id);};
+  var S=[
+    {v:'d1',n:'Chegada',eye:'Aruana · Aracaju/SE',h:[['De frente',0],['para o mar.',2]],p:'Muito mais que um empreendimento: um convite para explorar novas fronteiras.'},
+    {v:'d2',n:'Fachada',eye:'Design biofílico',h:[['A natureza',0],['começa',1],['na entrada',2]],p:'Fachada com paisagismo integrado à arquitetura.'},
+    {v:'d3',n:'Rooftop',eye:'The Ocean Rooftop',h:[['Lazer',0],['com vista',1],['panorâmica',2]],p:'Área de lazer completa no topo, de frente para o mar.'},
+    {v:'d4',n:'Infinity pool',eye:'Piscina com borda infinita',h:[['Borda infinita.',0],['Vista',1],['infinita.',2]],p:'Piscina com iluminação, deck molhado e hidromassagem.'},
+    {v:'d5',n:'Pôr do sol',eye:'Solarium',h:[['O sol se põe',0],['no seu',1],['rooftop',2]],p:'Solarium e deck para os fins de tarde.'},
+    {v:'d6',n:'Deck',eye:'Deck à beira do céu',h:[['Seu deck',0],['de frente',1],['pro mar',2]],p:'Espreguiçadeiras e mesas ao ar livre.'},
+    {v:'d7',n:'Sunset place',eye:'Sunset place',h:[['Um lugar',0],['para se',1],['conectar',2]],p:'Espaço para relaxar e receber, entregue decorado.'},
+    {v:'d8',n:'Sky gym',eye:'Sky gym',h:[['Treinar',0],['com vista',1],['para o mar',2]],p:'Academia equipada, com acesso por leitor facial.'},
+    {v:'d9',n:'Apartamento',eye:'2 suítes · living integrado',h:[['Apenas',0],['50',2],['apartamentos',1]],p:'Plantas de 77 a 79 m², com varanda e living integrado.'}
+  ];
+  var N=S.length,TR=1.4,reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var stage=$('tour'),clipsEl=$('clips'),edge=$('edge'),ep=$('ep'),eg=$('eg'),txt=$('txt'),ghost=$('ghost'),cur=0,busy=false,paused=false,visible=true;
+
+  (function(){var c=document.createElement('canvas');c.width=c.height=140;var g=c.getContext('2d'),d=g.createImageData(140,140);for(var i=0;i<d.data.length;i+=4){var v=Math.random()*255;d.data[i]=d.data[i+1]=d.data[i+2]=v;d.data[i+3]=255;}g.putImageData(d,0,0);$('grain').style.backgroundImage='url('+c.toDataURL()+')';})();
+
+  var clips=S.map(function(s,i){
+    var d=document.createElement('div');d.className='clip'+(i===0?' on':'');
+    var v=document.createElement('video');v.muted=true;v.defaultMuted=true;v.playsInline=true;v.setAttribute('playsinline','');v.setAttribute('muted','');
+    v.preload=i<2?'auto':'none';v.poster='v/'+s.v+'.jpg';v.setAttribute('aria-hidden','true');if(i<2)v.src='v/'+s.v+'.mp4';
+    d.appendChild(v);clipsEl.appendChild(d);return {el:d,v:v};
+  });
+  var rail=S.map(function(s,i){var b=document.createElement('button');b.type='button';b.innerHTML='<i></i><span>'+String(i+1).padStart(2,'0')+' '+s.n+'</span>';b.setAttribute('aria-label','Ir para '+s.n);b.onclick=function(){jump(i);};$('rail').appendChild(b);return b;});
+  function ensure(i){var c=clips[i];if(!c.v.getAttribute('src')){c.v.src='v/'+S[i].v+'.mp4';c.v.preload='auto';c.v.load();}}
+  function play(i){var p=clips[i].v.play();if(p&&p.catch)p.catch(function(){});}
+  function setCopy(i,delay){
+    var s=S[i];txt.classList.remove('in');
+    setTimeout(function(){
+      $('eye').textContent=s.eye;
+      $('hl').innerHTML=s.h.map(function(l){return '<span class="ln'+(l[1]===1?' b':l[1]===2?' y':'')+'"><span>'+l[0]+'</span></span>';}).join('');
+      $('pp').textContent=s.p;void txt.offsetWidth;txt.classList.add('in');
+    },delay);
+    $('hudtxt').innerHTML='<b>'+String(i+1).padStart(2,'0')+'</b> / '+String(N).padStart(2,'0')+' · '+s.n;
+    ghost.textContent=String(i+1).padStart(2,'0');
+    rail.forEach(function(b,j){b.classList.toggle('on',j===i);});
+  }
+  /* transição: uma duna (borda em onda) varre a tela e revela a próxima cena */
+  function wave(W,H,pos,dir,ph){
+    var pts=[],n=24,amp=W*.05;
+    for(var k=0;k<=n;k++){var y=H*k/n,x=pos+Math.sin(k/n*Math.PI*2.2+ph)*amp+Math.sin(k/n*Math.PI*5+ph*1.7)*amp*.35;pts.push([x,y]);}
+    return pts;
+  }
+  function go(dir,target){
+    if(busy)return;busy=true;
+    var ni=target!=null?target:(cur+dir+N)%N,a=clips[cur],b=clips[ni];
+    ensure(ni);ensure((ni+1)%N);b.v.currentTime=0;play(ni);
+    var W=stage.clientWidth,H=stage.clientHeight;edge.setAttribute('viewBox','0 0 '+W+' '+H);
+    b.el.classList.add('in');a.el.classList.add('out');
+    setCopy(ni,reduce?0:520);
+    var t0=performance.now(),dur=reduce?300:TR*1000,ph=Math.random()*6;
+    (function step(now){
+      var x=Math.min(1,(now-t0)/dur),e=x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2,pad=W*.12;
+      var pos=dir>0?(W+pad)-(W+pad*2)*e:-pad+(W+pad*2)*e;
+      var pts=wave(W,H,pos,dir,ph+x*2);
+      var poly=dir>0?pts.map(function(p){return p[0]+'px '+p[1]+'px';}).concat([W+pad+'px '+H+'px',W+pad+'px 0px']):pts.map(function(p){return p[0]+'px '+p[1]+'px';}).concat(['-'+pad+'px '+H+'px','-'+pad+'px 0px']);
+      b.el.style.clipPath='polygon('+poly.join(',')+')';
+      var d='M'+pts.map(function(p){return p[0].toFixed(1)+' '+p[1].toFixed(1);}).join(' L');ep.setAttribute('d',d);eg.setAttribute('d',d);
+      edge.style.opacity=reduce?0:Math.sin(x*Math.PI).toFixed(3);
+      if(x<1)requestAnimationFrame(step);
+      else{a.el.classList.remove('on','out');a.v.pause();b.el.classList.remove('in');b.el.classList.add('on');b.el.style.clipPath='';edge.style.opacity=0;cur=ni;busy=false;}
+    })(t0);
+  }
+  function jump(i){if(i===cur||busy)return;go(i>cur?1:-1,i);}
+  $('next').onclick=function(){go(1);};$('prev').onclick=function(){go(-1);};
+  addEventListener('keydown',function(e){if(e.key==='ArrowRight')go(1);if(e.key==='ArrowLeft')go(-1);});
+  var sx=null,sy=null;
+  stage.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;sy=e.touches[0].clientY;},{passive:true});
+  stage.addEventListener('touchend',function(e){if(sx===null)return;var dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.3)go(dx<0?1:-1);sx=null;});
+  stage.addEventListener('pointermove',function(e){if(e.pointerType!=='mouse')return;var r=stage.getBoundingClientRect();stage.style.setProperty('--mx',(e.clientX-r.left)+'px');stage.style.setProperty('--my',(e.clientY-r.top)+'px');ghost.style.transform='translate('+((e.clientX/r.width-.5)*-24)+'px,'+((e.clientY/r.height-.5)*-16)+'px)';});
+  if('IntersectionObserver' in window)new IntersectionObserver(function(es){visible=es[0].isIntersecting;if(visible&&!paused)play(cur);else clips[cur].v.pause();}).observe(stage);
+  document.addEventListener('visibilitychange',function(){if(document.hidden)clips[cur].v.pause();else if(visible&&!paused)play(cur);});
+  stage.addEventListener('click',function(e){if(e.target.closest('a,button,.panel,input,label'))return;paused=!paused;if(paused)clips[cur].v.pause();else play(cur);});
+  (function tick(){
+    requestAnimationFrame(tick);
+    var v=clips[cur].v,d=v.duration||5.5,t=v.currentTime||0;
+    $('bar').style.width=(Math.min(1,t/d)*100)+'%';
+    if(!busy&&visible&&!paused&&v.duration&&t>=d-TR-.05)go(1);
+    if(!busy&&t>d*.3)ensure((cur+1)%N);
+  })();
+  play(0);setCopy(0,0);
+  setTimeout(function(){$('intro').classList.add('gone');},reduce?0:1700);
+})();
+
+/* ===== CONFIGURAÇÃO PARA PUBLICAR ===== */
+var CONFIG={ pixelId:"", webhookUrl:"" };  /* Pixel do Meta e endereço do CRM que recebe o cadastro */
+(function(){
+  var $=function(id){return document.getElementById(id);};
+  if(CONFIG.pixelId){!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init',CONFIG.pixelId);fbq('track','PageView');}
+  var P=[
+    {n:'Tipo I',a:'77,71 m²',i:'v/pl1.jpg',l:['2 suítes','Estar, jantar, cozinha e serviço integrados','Varanda','Lavabo']},
+    {n:'Tipo II',a:'77,30 m²',i:'v/pl2.jpg',l:['2 suítes','Estar, jantar e cozinha integrados','Varanda e área de serviço','Lavabo']},
+    {n:'Tipo III',a:'78,44 m²',i:'v/pl3.jpg',l:['2 suítes','Estar, jantar, cozinha e serviço integrados','Varanda e jardim','Lavabo']},
+    {n:'Tipo IV',a:'79,38 m²',i:'v/pl4.jpg',l:['2 suítes','Estar, jantar e cozinha integrados','Varanda, serviço e jardim','Lavabo']}
+  ];
+  var tabs=$('tabs'),bs=P.map(function(p,i){var b=document.createElement('button');b.type='button';b.setAttribute('role','tab');b.textContent=p.n+' · '+p.a;b.onclick=function(){sel(i);};tabs.appendChild(b);return b;});
+  function sel(i){var p=P[i];bs.forEach(function(b,j){b.setAttribute('aria-selected',j===i?'true':'false');});var im=$('pimg');im.style.opacity=0;setTimeout(function(){im.src=p.i;im.alt='Planta '+p.n+' humanizada';im.style.opacity=1;},180);
+    $('pname').textContent='Planta '+p.n;$('parea').textContent=p.a;$('plist').innerHTML=p.l.map(function(x){return '<li>'+x+'</li>';}).join('');}
+  sel(0);
+  var panel=$('cadastro'),scrim=$('scrim'),mcta=$('mcta'),cl=$('close');
+  function sheet(){return matchMedia('(max-width:1100px)').matches;}
+  function open(e){if(e)e.preventDefault();if(sheet()){panel.classList.add('open');scrim.classList.add('open');mcta.classList.add('hide');cl.classList.add('show');}else{scrollTo({top:0,behavior:'smooth'});}setTimeout(function(){$('nome').focus({preventScroll:true});},450);if(window.fbq)fbq('track','Contact');}
+  function close(){panel.classList.remove('open');scrim.classList.remove('open');mcta.classList.remove('hide');cl.classList.remove('show');}
+  [].forEach.call(document.querySelectorAll('[data-open]'),function(b){b.addEventListener('click',open);});
+  cl.onclick=close;scrim.onclick=close;addEventListener('keydown',function(e){if(e.key==='Escape')close();});
+  var tel=$('tel');
+  tel.addEventListener('input',function(){var d=tel.value.replace(/\D/g,'').slice(0,11);tel.value=d.length>6?'('+d.slice(0,2)+') '+d.slice(2,d.length-4)+'-'+d.slice(-4):d.length>2?'('+d.slice(0,2)+') '+d.slice(2):d;});
+  ['nome','tel','email','lgpd'].forEach(function(id){$(id).addEventListener('input',function(){$('e-'+id).textContent='';});});
+  var params={};try{new URLSearchParams(location.search).forEach(function(v,k){if(/^utm_|fbclid/.test(k))params[k]=v;});}catch(e){}
+  $('Lead_Dune').addEventListener('submit',function(e){
+    e.preventDefault();
+    var f={nome:$('nome').value.trim(),telefone:'55'+tel.value.replace(/\D/g,''),email:$('email').value.trim().toLowerCase(),empreendimento:'Dune Simple Life',site:$('site').value};
+    var bad=false;function err(id,m){$('e-'+id).textContent=m;bad=true;}
+    if(f.nome.split(' ').filter(Boolean).length<2)err('nome','Digite nome e sobrenome.');
+    if(f.telefone.length<12)err('tel','Digite o WhatsApp com DDD.');
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.email))err('email','Digite um e-mail válido.');
+    if(!$('lgpd').checked)err('lgpd','Marque a autorização para podermos te chamar.');
+    if(bad)return;
+    if(f.site)return;
+    f.origem='site-dune';f.data=new Date().toISOString();Object.assign(f,params);delete f.site;
+    var btn=$('send');btn.disabled=true;$('send-t').textContent='Enviando…';
+    function done(){[].forEach.call($('Lead_Dune').querySelectorAll('.f,.consent,#send'),function(el){el.hidden=true;});$('ok').hidden=false;}
+    if(window.fbq)fbq('track','Lead',{content_name:'Dune Simple Life'});
+    if(!CONFIG.webhookUrl){setTimeout(done,600);return;}
+    fetch(CONFIG.webhookUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(f)}).then(function(r){if(!r.ok)throw 0;done();})
+      .catch(function(){btn.disabled=false;$('send-t').textContent='Quero conhecer o Dune';$('e-lgpd').textContent='Não conseguimos enviar agora. Tente de novo em alguns segundos.';});
+  });
+})();
+</script>
+
+</body>
+</html>
