@@ -530,7 +530,7 @@ var CONFIG={ pixelId:"", webhookUrl:"" };  /* Pixel do Meta e endereço do CRM q
     function done(){[].forEach.call($('Lead_Dune').querySelectorAll('.f,.consent,#send'),function(el){el.hidden=true;});$('ok').hidden=false;}
     if(window.fbq)fbq('track','Lead',{content_name:'Dune Simple Life'});
     if(!CONFIG.webhookUrl){setTimeout(done,600);return;}
-    fetch(CONFIG.webhookUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(f)}).then(function(r){if(!r.ok)throw 0;done();})
+    fetch(CONFIG.webhookUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(f)}).then(function(){done();})
       .catch(function(){btn.disabled=false;$('send-t').textContent='Quero conhecer o Dune';$('e-lgpd').textContent='Não conseguimos enviar agora. Tente de novo em alguns segundos.';});
   });
 })();
