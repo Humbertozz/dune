@@ -491,7 +491,7 @@ src="https://www.facebook.com/tr?id=1178383621427164&ev=PageView&noscript=1"
 })();
 
 /* ===== CONFIGURAÇÃO PARA PUBLICAR ===== */
-var CONFIG={ pixelId:"", webhookUrl:"" };  /* Pixel do Meta e endereço do CRM que recebe o cadastro */
+var CONFIG={ pixelId:"", webhookUrl:"https://script.google.com/macros/s/AKfycbzWCn1Sf70unIS37AR-LOq8mQXpf_f_EP3iGb9OzNlM5NihoiSqo02Iyd1cCRCGo0NJ9Q/exec" };  /* Pixel do Meta e endereço do CRM que recebe o cadastro */
 (function(){
   var $=function(id){return document.getElementById(id);};
   if(CONFIG.pixelId){!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init',CONFIG.pixelId);fbq('track','PageView');}
